@@ -1,4 +1,4 @@
-﻿# windowsapp-va-sender v1.0.0
+﻿# windowsapp-va-sender v1.0.1
 
 **Supported OS: Windows 11 only.**
 
@@ -85,4 +85,4 @@ No NuGet restore is required. This execution policy option applies only to that 
 See README.ja.md for Japanese instructions.
 ## Known selection issues
 
-AION2 has been reported missing from the APPLICATION list. The cause is not yet identified; this does not establish that capture itself is impossible. No special capture path is implemented yet.
+AION2 and Endfield were excluded because .NET Framework Process.HasExited returned access denied. Version 1.0.1 uses PROCESS_QUERY_LIMITED_INFORMATION for process identity and exit checks in both selection and audio capture. This fixes the identified enumeration issue; actual capture on these games still requires verification. Restore minimized windows before TEST or START.

@@ -22,8 +22,8 @@ namespace WindowsAppSender {
    if(WindowHandle==0||!IsWindow(hwnd)||!IsWindowVisible(hwnd))throw new InvalidOperationException(I18n.T(language,"The selected window is no longer available. Refresh the application list."));
    GetWindowThreadProcessId(hwnd,out pid);
    if(pid!=ProcessId)throw new InvalidOperationException(I18n.T(language,"The selected application changed. Refresh and select it again."));
-   try {using(var process=Process.GetProcessById(ProcessId)) {
-    if(process.HasExited||process.StartTime.ToUniversalTime().Ticks!=ProcessStartTicks)throw new InvalidOperationException(I18n.T(language,"The selected application changed. Refresh and select it again."));
+   try {using(var process=new ProcessIdentity(ProcessId)) {
+    if(!process.IsRunning||process.StartTicks!=ProcessStartTicks)throw new InvalidOperationException(I18n.T(language,"The selected application changed. Refresh and select it again."));
    }}catch(ArgumentException){throw new InvalidOperationException(I18n.T(language,"The selected application changed. Refresh and select it again."));}
    if(IsIconic(hwnd))throw new InvalidOperationException(I18n.T(language,"Restore the selected application window before starting."));
   }
@@ -35,8 +35,8 @@ namespace WindowsAppSender {
     uint pid;GetWindowThreadProcessId(hwnd,out pid);if(pid==0||pid==own)return true;
     int cloaked;if(DwmGetWindowAttribute(hwnd,14,out cloaked,4)==0&&cloaked!=0)return true;
     var title=new StringBuilder(GetWindowTextLength(hwnd)+1);GetWindowText(hwnd,title,title.Capacity);
-    try {using(var p=Process.GetProcessById((int)pid)) {
-     if(!p.HasExited)result.Add(new ApplicationTarget(unchecked((ulong)hwnd.ToInt64()),p.Id,p.StartTime.ToUniversalTime().Ticks,p.ProcessName+".exe",title.ToString()));
+    try {using(var p=Process.GetProcessById((int)pid))using(var identity=new ProcessIdentity((int)pid)) {
+     if(identity.IsRunning)result.Add(new ApplicationTarget(unchecked((ulong)hwnd.ToInt64()),p.Id,identity.StartTicks,p.ProcessName+".exe",title.ToString()));
     }}catch(Exception e)when(e is ArgumentException||e is InvalidOperationException||e is System.ComponentModel.Win32Exception){}
     return true;
    },IntPtr.Zero);

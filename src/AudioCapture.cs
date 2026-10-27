@@ -61,6 +61,7 @@ class Program {
   if(pid!=0 && name!=null) throw new ArgumentException("Choose process OR pid");
   if(pid==0) { if(name==null) throw new ArgumentException("Specify --process or --pid"); var ps=Process.GetProcessesByName(name); if(ps.Length!=1) throw new ArgumentException($"Expected one {name}, found {ps.Length}. Start game or use --pid."); pid=ps[0].Id; foreach(var p in ps) p.Dispose(); }
   using var target=Process.GetProcessById(pid);
+  using var identity=new WindowsAppSender.ProcessIdentity(pid);
   Console.CancelKeyPress+=(s,e)=>{ e.Cancel=true; stopped=true; };
   IntPtr data=Marshal.AllocHGlobal(12); IAudioClient? client=null; object? capObject=null; IOperation? operation=null;
   var cb=new Completion();
@@ -80,7 +81,7 @@ class Program {
    using Stream sink=output==null?Console.OpenStandardOutput():new FileStream(output,FileMode.CreateNew,FileAccess.Write,FileShare.Read);
    Console.Error.WriteLine($"Capturing PID {pid} ({target.ProcessName}) and descendants; s16le 48000 stereo.");
    client.Start(); var clock=Stopwatch.StartNew(); long total=0; int discontinuities=0;
-   while(!stopped && !target.HasExited && (seconds==0 || clock.Elapsed.TotalSeconds<seconds)) {
+   while(!stopped && identity.IsRunning && (seconds==0 || clock.Elapsed.TotalSeconds<seconds)) {
     ready.WaitOne(100); capture.GetNextPacketSize(out uint next);
     while(next!=0) {
      capture.GetBuffer(out IntPtr ptr,out uint frames,out uint flags,out _,out _);

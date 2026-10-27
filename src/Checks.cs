@@ -9,6 +9,11 @@ namespace WindowsAppSender {
   public static int Run(string path) {
    var results=new List<string>();
    try {
+    using(var current=System.Diagnostics.Process.GetCurrentProcess())using(var identity=new ProcessIdentity(current.Id)) {
+     Require(identity.IsRunning,"limited-query current process running");
+     Require(identity.StartTicks==current.StartTime.ToUniversalTime().Ticks,"limited-query creation identity");
+    }
+    results.Add("PASS: limited-query process identity matches creation time; running state queried without Process.HasExited.");
     foreach(string size in new[]{"960x540","1280x720","1920x1080"})foreach(int fps in new[]{30,60})foreach(string protocol in new[]{"RTMP","SRT"})foreach(string adjust in new[]{"CROP","COMPRESS","LETTER-BOX"})foreach(string video in new[]{"H264 (CPU)","H264 (NVEnc)","H264 (AMD)"}) {
      var c=new Config{Target=new ApplicationTarget(1234,5678,9,"game.exe","Game"),Size=size,Fps=fps,Protocol=protocol,Adjustment=adjust,Video=video};var a=c.Command("srt://example:1935?x=a&y=b");
      int expected=size=="960x540"?(fps==30?3000:4000):size=="1280x720"?(fps==30?4500:6000):(fps==30?6000:8000);

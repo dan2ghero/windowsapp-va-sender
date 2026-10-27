@@ -1,4 +1,4 @@
-﻿# windowsapp-va-sender v1.0.0
+﻿# windowsapp-va-sender v1.0.1
 
 **動作対象：Windows 11のみ（Works only on Windows 11）**
 
@@ -82,4 +82,4 @@ srcにソースを同梱しています。Windowsのビルド用PCに.NET SDK 8�
 NuGetパッケージの復元は不要です。実行ポリシーの指定はそのプロセスだけに適用します。
 ## アプリケーション選択の既知の事象
 
-AION2がAPPLICATION一覧に表示されないとの報告があります。原因は未調査で、キャプチャ自体が不可能とは確定していません。専用の取り込み処理は未実装です。
+AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否となり一覧から除外されていました。v1.0.1では一覧・音声取得の起動個体／終了確認にPROCESS_QUERY_LIMITED_INFORMATIONを使用します。確認できた一覧除外の原因を修正したもので、両ゲームの実際の映像・音声取得は別途確認が必要です。TESTやSTARTの前に最小化を解除してください。
