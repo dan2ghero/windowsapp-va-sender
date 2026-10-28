@@ -43,7 +43,14 @@ namespace WindowsAppSender {
     foreach(string language in new[]{"ENG","JPN"}) {
      var config=new Config{Language=language};
      using(var main=new MainForm(config)) {
-      Show(main);main.RefreshInfo();Require(main.Text.EndsWith(" "+Theme.Version),"title version");Require(All(main).OfType<Label>().Any(c=>c.Text==Theme.Version),"footer version");Require(All(main).OfType<Button>().Any(b=>b.Text==config.T("SETTING")),"localized main button");
+      Show(main);main.RefreshInfo();Require(main.Text.EndsWith(" "+Theme.Version),"title version");Require(All(main).OfType<Label>().Any(c=>c.Text==Theme.Version),"footer version");Require(main.Text.EndsWith(" v1.1.0"),"release version title");Require(All(main).OfType<Button>().Any(b=>b.Text==config.T("SETTING")),"localized main button");
+      var logMethod=typeof(MainForm).GetMethod("Log",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+      var logBox=(TextBox)typeof(MainForm).GetField("logs",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(main);
+      logMethod.Invoke(main,new object[]{Compatibility.Description});
+      Require(logBox.Text.Contains(Compatibility.Description),"diagnostic log appends without recursive calls");
+      logMethod.Invoke(main,new object[]{new string('x',24050)});
+      logMethod.Invoke(main,new object[]{"log-after-overflow"});
+      Require(logBox.Text=="log-after-overflow"+Environment.NewLine,"long log clears and appends without recursion");
       Image(main,Path.Combine(directory,"main-"+language.ToLowerInvariant()+".png"));
      }
      using(var custom=new CustomForm(false,"",Args.Join(config.Encoding()),language)) {Show(custom);Require(All(custom).OfType<CheckBox>().Single().Text==config.T("Use CUSTOM options"),"localized CUSTOM");Image(custom,Path.Combine(directory,"custom-"+language.ToLowerInvariant()+".png"));}
@@ -54,6 +61,7 @@ namespace WindowsAppSender {
     result.Add("PASS: SAVE, JSON persistence, CANCEL, and existing size/FPS retained.");
     result.Add("PASS: ENG/JPN main, SETTING and CUSTOM labels and validation messages; six UI screenshots rendered.");
     result.Add("PASS: Sender command is identical in ENG and JPN.");
+    result.Add("PASS: ENG/JPN diagnostic logging and long-log rollover do not recurse.");
     File.WriteAllLines(Path.Combine(directory,"UI-RESULTS.txt"),result);return 0;
    }catch(Exception e){result.Add("FAIL: "+e);File.WriteAllLines(Path.Combine(directory,"UI-RESULTS.txt"),result);return 1;}
   }

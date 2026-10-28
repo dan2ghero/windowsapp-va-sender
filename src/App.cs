@@ -15,7 +15,7 @@ namespace WindowsAppSender {
   public static string Version {get{return "v"+typeof(Theme).Assembly.GetName().Version.ToString(3);}}
   public static Control Footer(string text) {
    var panel=new TableLayoutPanel {Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty};
-   panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,90));
+   panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,180));
    panel.Controls.Add(Label(text,8,true),0,0);var version=Label(Version,8,true);version.Anchor=AnchorStyles.Top|AnchorStyles.Right;panel.Controls.Add(version,1,0);return panel;
   }
   public static Color Bg=Color.FromArgb(18,21,28), Panel=Color.FromArgb(28,33,43), Text=Color.FromArgb(233,237,245), Muted=Color.FromArgb(151,162,183), Accent=Color.FromArgb(116,151,245);
@@ -49,7 +49,7 @@ namespace WindowsAppSender {
    root.Controls.Add(Theme.Label("INFO",10,true),0,8);info.ReadOnly=true;root.Controls.Add(info,0,9);
    var buttons=new FlowLayoutPanel {Dock=DockStyle.Fill,WrapContents=false};buttons.Controls.AddRange(new Control[]{settings,test,start});root.Controls.Add(buttons,0,11);
    root.Controls.Add(status,0,12);root.Controls.Add(Theme.Label("SESSION LOG",9,true),0,13);logs.ReadOnly=true;root.Controls.Add(logs,0,14);
-   root.Controls.Add(Theme.Footer("Windows 11 · selected application / process tree audio"),0,15);
+   root.Controls.Add(Theme.Footer("Windows 10/11 · selected application / process tree audio"),0,15);
    Controls.Add(root);
    settings.Click+=(s,e)=>{using(var dialog=new SettingsForm(config)) if(dialog.ShowDialog(this)==DialogResult.OK) {config=dialog.Result;config.Target=application.SelectedItem as ApplicationTarget;Save();ApplyLanguage();}};
    refresh.Click+=(s,e)=>RefreshApplications();
@@ -87,7 +87,7 @@ namespace WindowsAppSender {
   }
   async Task Run(bool preview) {
    try {
-    if(Environment.OSVersion.Version.Build<20348)throw new InvalidOperationException(config.T("Process audio capture requires Windows build 20348 or later. Use Windows 11."));
+    Compatibility.EnsureSupported();
     if(!Bootstrap.Ready)await PrepareTools();
     Validate(config);string dest=url.Text.Trim();
     if(config.Target==null)throw new InvalidOperationException(config.T("Select an application before starting."));
@@ -96,7 +96,7 @@ namespace WindowsAppSender {
      string expected=config.Protocol=="SRT"?"srt://":config.T("rtmp:// or rtmps://");
      throw new ArgumentException(config.T("Enter an OUTPUT URL starting with {0}.",expected));
     }
-    busy=true;settings.Enabled=false;test.Enabled=false;application.Enabled=false;refresh.Enabled=false;url.ReadOnly=true;start.Text=config.T("STOP");status.Text=config.T(preview?"TESTING · 20 SECONDS":"SENDING");logs.Clear();
+    busy=true;settings.Enabled=false;test.Enabled=false;application.Enabled=false;refresh.Enabled=false;url.ReadOnly=true;start.Text=config.T("STOP");status.Text=config.T(preview?"TESTING · 20 SECONDS":"SENDING");logs.Clear();Log(Compatibility.Description);
     session=new Session(Log);session.Start(config,dest,preview);await session.Completion;
    } catch(Exception e) {string message=I18n.T(config.Language,e.Message);Log(message);if(!IsDisposed&&!Disposing)MessageBox.Show(this,message,"windowsapp-va-sender",MessageBoxButtons.OK,MessageBoxIcon.Information);}
    finally {session?.Dispose();session=null;busy=false;if(!IsDisposed){settings.Enabled=true;test.Enabled=true;application.Enabled=true;refresh.Enabled=true;url.ReadOnly=false;start.Text=config.T("START");status.Text=config.T("READY");}}
@@ -150,6 +150,7 @@ namespace WindowsAppSender {
    try {
     if(args.Length>0&&args[0]=="--self-test")return Checks.Run(args.Length>1?args[1]:"checks.txt");
     if(args.Length>0&&args[0]=="--fixture"){TargetChecks.Fixture(args[1],int.Parse(args[2]));return 0;}
+    if(args.Length>0&&args[0]=="--test-button-checks")return TargetChecks.ButtonRun(args[1]);
     if(args.Length>0&&args[0]=="--target-checks")return TargetChecks.Run(args[1]);
     if(args.Length>0&&args[0]=="--ui-checks")return UiChecks.Run(args[1]);
     if(args.Length>0&&args[0]=="--encode-checks")return Checks.Encode(args[1]);

@@ -1,6 +1,7 @@
-﻿# windowsapp-va-sender v1.0.1
+﻿# windowsapp-va-sender v1.1.0
 
-**Supported OS: Windows 11 only.**
+**Supported OS: Windows 10 22H2 / Windows 11 (x64).**
+
 
 Stream a selected Windows application's video and process audio over SRT or RTMP.
 
@@ -62,7 +63,7 @@ CUSTOM accepts output encoding options as -option value pairs. The app manages i
 
 ## Compatibility
 
-- Windows 11 x64 with .NET Framework 4.8 (included in Windows 11). No .NET 8 Runtime installation is required.
+- Windows 10/11 x64 with .NET Framework 4.8.  No .NET 8 Runtime installation is required.
 - GPU encoding requires compatible NVIDIA or AMD hardware and drivers.
 - Pinned FFmpeg: BtbN N-124714-g49a77d37be-20260531.
 - Keep the target window restored. Capture availability depends on the application and Windows capture permissions; protected windows may not work.
@@ -85,4 +86,15 @@ No NuGet restore is required. This execution policy option applies only to that 
 See README.ja.md for Japanese instructions.
 ## Known selection issues
 
-AION2 and Endfield were excluded because .NET Framework Process.HasExited returned access denied. Version 1.0.1 uses PROCESS_QUERY_LIMITED_INFORMATION for process identity and exit checks in both selection and audio capture. This fixes the identified enumeration issue; actual capture on these games still requires verification. Restore minimized windows before TEST or START.
+AION2 and Endfield were excluded because .NET Framework Process.HasExited returned access denied. Version 1.0.1 uses PROCESS_QUERY_LIMITED_INFORMATION for process identity and exit checks in both selection and audio capture. AION2 and Endfield capture, TEST, and sending were subsequently confirmed by the user. Restore minimized windows before TEST or START.
+
+## Confirmed environments
+
+User-reported successful operation:
+
+| OS | GPU |
+|---|---|
+| Windows 10 22H2 / 19045.6466 | RTX 2060 6GB |
+| Windows 11 Home 25H2 / 26200.9711 | RTX 3060 12GB |
+
+These are confirmed examples, not a guarantee for every hardware, driver, or application combination. No additional virtual audio driver is required.

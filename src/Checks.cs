@@ -9,6 +9,8 @@ namespace WindowsAppSender {
   public static int Run(string path) {
    var results=new List<string>();
    try {
+    Require(Compatibility.CanAttempt(19045)&&Compatibility.CanAttempt(19041)&&Compatibility.CanAttempt(22631)&&!Compatibility.CanAttempt(18363),"Windows 10 compatibility boundary");
+    results.Add("PASS: Win10 builds 19041/19045 and Win11 may attempt API activation; older builds rejected.");
     using(var current=System.Diagnostics.Process.GetCurrentProcess())using(var identity=new ProcessIdentity(current.Id)) {
      Require(identity.IsRunning,"limited-query current process running");
      Require(identity.StartTicks==current.StartTime.ToUniversalTime().Ticks,"limited-query creation identity");

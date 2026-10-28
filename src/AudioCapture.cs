@@ -45,10 +45,11 @@ class Program {
  [DllImport("Mmdevapi.dll", CharSet=CharSet.Unicode, PreserveSig=true)]
  static extern int ActivateAudioInterfaceAsync(string path, ref Guid iid, ref Variant args, ICompletion completion, out IOperation operation);
  static volatile bool stopped;
+ static string stage="argument validation";
  [MTAThread] static int Main(string[] args) {
   if(args.Length==0 || args[0]=="--help") { Console.Error.WriteLine("GameAudio --process game.exe | --pid PID [--seconds N] [--output raw.pcm]\nOutput: raw signed 16-bit LE, 48000 Hz stereo. Diagnostics: stderr. Ctrl+C stops."); return 0; }
   try { return Run(args); } catch(IOException e) { Console.Error.WriteLine("Output closed: "+e.Message); return 4; }
-  catch(Exception e) { Console.Error.WriteLine($"ERROR 0x{e.HResult:X8}: {e.Message}"); return 1; }
+  catch(Exception e) { Console.Error.WriteLine($"Audio failure at {stage}: HRESULT=0x{e.HResult:X8}; {e.Message}"); return 1; }
  }
  static int Run(string[] args) {
   string? name=null, output=null; int pid=0, seconds=0;
@@ -57,7 +58,8 @@ class Program {
    case "--seconds": seconds=int.Parse(v); if(seconds<=0) throw new ArgumentException("seconds must be positive"); break;
    case "--output": output=v; break; default: throw new ArgumentException("Unknown option");
   }}
-  if(Environment.OSVersion.Version.Build<20348) throw new PlatformNotSupportedException("Process Loopback needs Windows build 20348+. Windows 10 build 19045 is unsupported.");
+  WindowsAppSender.Compatibility.EnsureSupported();
+  Console.Error.WriteLine(WindowsAppSender.Compatibility.Description);
   if(pid!=0 && name!=null) throw new ArgumentException("Choose process OR pid");
   if(pid==0) { if(name==null) throw new ArgumentException("Specify --process or --pid"); var ps=Process.GetProcessesByName(name); if(ps.Length!=1) throw new ArgumentException($"Expected one {name}, found {ps.Length}. Start game or use --pid."); pid=ps[0].Id; foreach(var p in ps) p.Dispose(); }
   using var target=Process.GetProcessById(pid);
@@ -69,18 +71,25 @@ class Program {
    // AUDIOCLIENT_ACTIVATION_PARAMS: PROCESS_LOOPBACK=1, PID, INCLUDE_TARGET_PROCESS_TREE=0.
    Marshal.WriteInt32(data,0,1); Marshal.WriteInt32(data,4,pid); Marshal.WriteInt32(data,8,0);
    var pv=new Variant { vt=65, size=12, data=data }; var iid=typeof(IAudioClient).GUID;
+   stage="ActivateAudioInterfaceAsync";
+   Console.Error.WriteLine("Process Loopback: requesting activation...");
    Marshal.ThrowExceptionForHR(ActivateAudioInterfaceAsync("VAD\\Process_Loopback",ref iid,ref pv,cb,out operation));
-   if(!cb.Ready.Wait(10000)) { Console.Error.WriteLine("Activation timeout"); Environment.Exit(2); }
+   stage="activation completion (10-second timeout)";
+   if(!cb.Ready.Wait(10000)) throw new TimeoutException("Process Loopback activation did not complete within 10 seconds.");
+   stage="activation completion result";
    if(cb.Error!=null) throw cb.Error;
+   Console.Error.WriteLine("Process Loopback: activation completed.");
    client=(IAudioClient)cb.Client!;
    var wave=new Wave { tag=1,channels=2,rate=48000,bytes=192000,align=4,bits=16 };
    using var ready=new AutoResetEvent(false);
+   stage="IAudioClient.Initialize (s16le 48000 stereo)";
    client.Initialize(0,0x80000000u|0x00020000u|0x00040000u,0,0,ref wave,IntPtr.Zero);
    client.SetEventHandle(ready.SafeWaitHandle.DangerousGetHandle());
    var captureId=typeof(ICapture).GUID; client.GetService(ref captureId,out capObject); var capture=(ICapture)capObject;
    using Stream sink=output==null?Console.OpenStandardOutput():new FileStream(output,FileMode.CreateNew,FileAccess.Write,FileShare.Read);
    Console.Error.WriteLine($"Capturing PID {pid} ({target.ProcessName}) and descendants; s16le 48000 stereo.");
-   client.Start(); var clock=Stopwatch.StartNew(); long total=0; int discontinuities=0;
+   stage="IAudioClient.Start";
+   client.Start(); stage="capture packets / PCM output"; var clock=Stopwatch.StartNew(); long total=0; int discontinuities=0;
    while(!stopped && identity.IsRunning && (seconds==0 || clock.Elapsed.TotalSeconds<seconds)) {
     ready.WaitOne(100); capture.GetNextPacketSize(out uint next);
     while(next!=0) {

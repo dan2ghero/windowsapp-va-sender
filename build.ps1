@@ -9,6 +9,6 @@ $sources=Get-ChildItem (Join-Path $base 'src') -Filter '*.cs' | Where-Object Nam
 & dotnet $compiler @common /target:winexe ('/out:'+(Join-Path $base 'windowsapp-va-sender.exe')) @sources
 if($LASTEXITCODE -ne 0){throw 'UI compile failed'}
 New-Item -ItemType Directory -Force (Join-Path $base 'tools') | Out-Null
-& dotnet $compiler @common /nullable:enable /target:exe ('/out:'+(Join-Path $base 'tools\AppAudio.exe')) (Join-Path $base 'src\AudioCapture.cs') (Join-Path $base 'src\ProcessIdentity.cs')
+& dotnet $compiler @common /nullable:enable /target:exe ('/out:'+(Join-Path $base 'tools\AppAudio.exe')) (Join-Path $base 'src\AudioCapture.cs') (Join-Path $base 'src\Compatibility.cs') (Join-Path $base 'src\AssemblyInfo.cs') (Join-Path $base 'src\ProcessIdentity.cs')
 if($LASTEXITCODE -ne 0){throw 'Audio helper compile failed'}
 Write-Host 'Build OK (.NET Framework 4.8 x64; no NuGet packages)'

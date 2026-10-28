@@ -1,6 +1,7 @@
-﻿# windowsapp-va-sender v1.0.1
+﻿# windowsapp-va-sender v1.1.0
 
-**動作対象：Windows 11のみ（Works only on Windows 11）**
+**動作対象：Windows 10 22H2 / Windows 11（x64）**
+
 
 選択したアプリケーションの映像と、そのプロセスの音声をSRT / RTMPで送信するアプリです。
 
@@ -61,7 +62,7 @@ CUSTOMには -オプション 値 の組を指定します。入力・URL・転�
 
 ## 対応環境
 
-- Windows 11 x64 / .NET Framework 4.8（Windows 11標準搭載）。.NET 8 Runtimeの追加インストールは不要です。
+- Windows 10/11 x64 / .NET Framework 4.8。.NET 8 Runtimeの追加インストールは不要です。
 - GPUエンコードは対応GPU・ドライバーが必要です。
 - FFmpegはBtbN N-124714-g49a77d37be-20260531を使用します。
 - 対象ウィンドウは最小化を解除してください。アプリの仕様・Windowsのキャプチャ権限によって取得できない場合があります。
@@ -82,4 +83,15 @@ srcにソースを同梱しています。Windowsのビルド用PCに.NET SDK 8�
 NuGetパッケージの復元は不要です。実行ポリシーの指定はそのプロセスだけに適用します。
 ## アプリケーション選択の既知の事象
 
-AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否となり一覧から除外されていました。v1.0.1では一覧・音声取得の起動個体／終了確認にPROCESS_QUERY_LIMITED_INFORMATIONを使用します。確認できた一覧除外の原因を修正したもので、両ゲームの実際の映像・音声取得は別途確認が必要です。TESTやSTARTの前に最小化を解除してください。
+AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否となり一覧から除外されていました。v1.1.0では一覧・音声取得の起動個体／終了確認にPROCESS_QUERY_LIMITED_INFORMATIONを使用します。確認できた一覧除外の原因を修正したもので、その後、利用者により両ゲームのキャプチャ・TEST・送信の動作確認が取れています。TESTやSTARTの前に最小化を解除してください。
+
+## 動作確認環境
+
+利用者から以下の環境で動作確認の報告をいただいています。
+
+| OS | GPU |
+|---|---|
+| Windows 10 22H2 / 19045.6466 | RTX 2060 6GB |
+| Windows 11 Home 25H2 / 26200.9711 | RTX 3060 12GB |
+
+すべての機器・ドライバー・アプリケーションの組み合わせを保証するものではありません。仮想音声ドライバーの追加は不要です。
