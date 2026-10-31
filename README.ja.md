@@ -95,5 +95,3 @@ AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否と
 | Windows 11 Home 25H2 / 26200.9711 | RTX 3060 12GB |
 
 すべての機器・ドライバー・アプリケーションの組み合わせを保証するものではありません。仮想音声ドライバーの追加は不要です。
-
-
