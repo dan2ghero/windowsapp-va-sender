@@ -1,4 +1,4 @@
-﻿# windowsapp-va-sender v1.1.0
+# windowsapp-va-sender v1.1.4
 
 **動作対象：Windows 10 22H2 / Windows 11（x64）**
 
@@ -83,7 +83,7 @@ srcにソースを同梱しています。Windowsのビルド用PCに.NET SDK 8�
 NuGetパッケージの復元は不要です。実行ポリシーの指定はそのプロセスだけに適用します。
 ## アプリケーション選択の既知の事象
 
-AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否となり一覧から除外されていました。v1.1.0では一覧・音声取得の起動個体／終了確認にPROCESS_QUERY_LIMITED_INFORMATIONを使用します。確認できた一覧除外の原因を修正したもので、その後、利用者により両ゲームのキャプチャ・TEST・送信の動作確認が取れています。TESTやSTARTの前に最小化を解除してください。
+AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否となり一覧から除外されていました。v1.1.4では一覧・音声取得の起動個体／終了確認にPROCESS_QUERY_LIMITED_INFORMATIONを使用します。確認できた一覧除外の原因を修正したもので、その後、利用者により両ゲームのキャプチャ・TEST・送信の動作確認が取れています。TESTやSTARTの前に最小化を解除してください。
 
 ## 動作確認環境
 
@@ -95,3 +95,9 @@ AION2とEndfieldは、.NET FrameworkのProcess.HasExitedがアクセス拒否と
 | Windows 11 Home 25H2 / 26200.9711 | RTX 3060 12GB |
 
 すべての機器・ドライバー・アプリケーションの組み合わせを保証するものではありません。仮想音声ドライバーの追加は不要です。
+
+## v1.1.4
+
+映像・音声の取得時刻を基準とする自動同期を有効にしました。SESSION LOGは画面表示のみで、診断ログや計測CSVは保存しません。同期用の小さな一時ファイルはセッション終了時に削除します。設定は従来どおり端末内に保存します。
+
+同梱する同期対応FFmpegの対応ソースは、このリリースに併設する **ffmpeg-autosync1-source.zip** です。公開時はこのソースアーカイブも併せて掲載してください。初回ダウンロードでは追加のFFmpeg/ffplayを取得します。

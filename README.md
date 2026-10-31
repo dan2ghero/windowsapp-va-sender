@@ -1,4 +1,4 @@
-﻿# windowsapp-va-sender v1.1.0
+# windowsapp-va-sender v1.1.4
 
 **Supported OS: Windows 10 22H2 / Windows 11 (x64).**
 
@@ -98,3 +98,9 @@ User-reported successful operation:
 | Windows 11 Home 25H2 / 26200.9711 | RTX 3060 12GB |
 
 These are confirmed examples, not a guarantee for every hardware, driver, or application combination. No additional virtual audio driver is required.
+
+## v1.1.4
+
+Automatic audio/video startup synchronization is enabled. SESSION LOG is displayed in memory only; no diagnostic logs or timing CSV files are saved. A small temporary synchronization timestamp file is removed when the session is disposed. Settings are still saved locally.
+
+The bundled synchronization FFmpeg engine has corresponding source in **ffmpeg-autosync1-source.zip**, provided with this release. Publish that archive alongside the public ZIP. The first-launch download provides the additional FFmpeg/ffplay tools.

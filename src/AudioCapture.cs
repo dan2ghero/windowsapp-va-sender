@@ -46,17 +46,18 @@ class Program {
  static extern int ActivateAudioInterfaceAsync(string path, ref Guid iid, ref Variant args, ICompletion completion, out IOperation operation);
  static volatile bool stopped;
  static string stage="argument validation";
+
  [MTAThread] static int Main(string[] args) {
   if(args.Length==0 || args[0]=="--help") { Console.Error.WriteLine("GameAudio --process game.exe | --pid PID [--seconds N] [--output raw.pcm]\nOutput: raw signed 16-bit LE, 48000 Hz stereo. Diagnostics: stderr. Ctrl+C stops."); return 0; }
   try { return Run(args); } catch(IOException e) { Console.Error.WriteLine("Output closed: "+e.Message); return 4; }
   catch(Exception e) { Console.Error.WriteLine($"Audio failure at {stage}: HRESULT=0x{e.HResult:X8}; {e.Message}"); return 1; }
  }
  static int Run(string[] args) {
-  string? name=null, output=null; int pid=0, seconds=0;
+  string? name=null, output=null, epochPath=null; int pid=0, seconds=0;
   for(int i=0;i<args.Length;i++) { if(i+1==args.Length) throw new ArgumentException("Missing option value"); string v=args[++i]; switch(args[i-1]) {
    case "--process": name=Path.GetFileNameWithoutExtension(v); break; case "--pid": pid=int.Parse(v); break;
    case "--seconds": seconds=int.Parse(v); if(seconds<=0) throw new ArgumentException("seconds must be positive"); break;
-   case "--output": output=v; break; default: throw new ArgumentException("Unknown option");
+   case "--epoch": epochPath=v; break; case "--output": output=v; break; default: throw new ArgumentException("Unknown option");
   }}
   WindowsAppSender.Compatibility.EnsureSupported();
   Console.Error.WriteLine(WindowsAppSender.Compatibility.Description);
@@ -89,15 +90,23 @@ class Program {
    using Stream sink=output==null?Console.OpenStandardOutput():new FileStream(output,FileMode.CreateNew,FileAccess.Write,FileShare.Read);
    Console.Error.WriteLine($"Capturing PID {pid} ({target.ProcessName}) and descendants; s16le 48000 stereo.");
    stage="IAudioClient.Start";
-   client.Start(); stage="capture packets / PCM output"; var clock=Stopwatch.StartNew(); long total=0; int discontinuities=0;
+   client.Start(); stage="capture packets / PCM output"; var clock=Stopwatch.StartNew(); long total=0; int discontinuities=0;long packets=0;
    while(!stopped && identity.IsRunning && (seconds==0 || clock.Elapsed.TotalSeconds<seconds)) {
     ready.WaitOne(100); capture.GetNextPacketSize(out uint next);
     while(next!=0) {
-     capture.GetBuffer(out IntPtr ptr,out uint frames,out uint flags,out _,out _);
+     capture.GetBuffer(out IntPtr ptr,out uint frames,out uint flags,out ulong devicePosition,out ulong qpcPosition);
+     if(packets==0 && epochPath!=null) {
+      if((flags&4)!=0 || qpcPosition==0) {capture.ReleaseBuffer(frames);throw new InvalidOperationException("AUTO_SYNC: first audio acquisition timestamp is invalid; no estimated offset will be used.");}
+      string epochTemporary=epochPath+".partial";
+      File.WriteAllText(epochTemporary,qpcPosition.ToString(System.Globalization.CultureInfo.InvariantCulture),new System.Text.UTF8Encoding(false));
+      File.Move(epochTemporary,epochPath);
+     }
+     packets++;
      byte[] buffer=new byte[checked((int)frames*4)];
      try { if((flags&2)==0) Marshal.Copy(ptr,buffer,0,buffer.Length); } finally { capture.ReleaseBuffer(frames); }
      if((flags&1)!=0) discontinuities++;
-     sink.Write(buffer,0,buffer.Length); total+=frames; capture.GetNextPacketSize(out next);
+     sink.Write(buffer,0,buffer.Length);total+=frames;
+     capture.GetNextPacketSize(out next);
     }
    }
    client.Stop(); sink.Flush(); Console.Error.WriteLine($"Stopped: {total} frames, {total/48000.0:F3}s PCM, {discontinuities} discontinuities."); return 0;

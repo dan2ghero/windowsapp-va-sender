@@ -148,6 +148,7 @@ namespace WindowsAppSender {
   [STAThread] static int Main(string[] args) {
    Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);SetProcessDPIAware();
    try {
+    if(args.Length>0&&args[0]=="--clock-nvenc-checks")return TargetChecks.ButtonNvencRun(args[1]);
     if(args.Length>0&&args[0]=="--self-test")return Checks.Run(args.Length>1?args[1]:"checks.txt");
     if(args.Length>0&&args[0]=="--fixture"){TargetChecks.Fixture(args[1],int.Parse(args[2]));return 0;}
     if(args.Length>0&&args[0]=="--test-button-checks")return TargetChecks.ButtonRun(args[1]);

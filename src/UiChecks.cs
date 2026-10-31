@@ -43,7 +43,7 @@ namespace WindowsAppSender {
     foreach(string language in new[]{"ENG","JPN"}) {
      var config=new Config{Language=language};
      using(var main=new MainForm(config)) {
-      Show(main);main.RefreshInfo();Require(main.Text.EndsWith(" "+Theme.Version),"title version");Require(All(main).OfType<Label>().Any(c=>c.Text==Theme.Version),"footer version");Require(main.Text.EndsWith(" v1.1.0"),"release version title");Require(All(main).OfType<Button>().Any(b=>b.Text==config.T("SETTING")),"localized main button");
+      Show(main);main.RefreshInfo();Require(main.Text.EndsWith(" "+Theme.Version),"title version");Require(All(main).OfType<Label>().Any(c=>c.Text==Theme.Version),"footer version");Require(main.Text.EndsWith(" v1.1.4"),"release version title");Require(All(main).OfType<Button>().Any(b=>b.Text==config.T("SETTING")),"localized main button");
       var logMethod=typeof(MainForm).GetMethod("Log",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
       var logBox=(TextBox)typeof(MainForm).GetField("logs",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(main);
       logMethod.Invoke(main,new object[]{Compatibility.Description});

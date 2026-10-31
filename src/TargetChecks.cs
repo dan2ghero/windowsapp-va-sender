@@ -104,6 +104,39 @@ namespace WindowsAppSender {
    }catch(Exception ex){File.WriteAllText(report,"FAIL: "+ex);return 1;}
    finally{if(main!=null)main.Dispose();if(fixture!=null){try{if(!fixture.HasExited)fixture.Kill();fixture.Dispose();}catch{}}}
   }
+  public static int ButtonNvencRun(string directory) {
+   Directory.CreateDirectory(directory);directory=Path.GetFullPath(directory);
+   Process fixture=null;MainForm main=null;int result=1;bool started=false;
+   string report=Path.Combine(directory,"BUTTON-RESULTS.txt");
+   try {
+    string metadata=Path.Combine(directory,"button-fixture.json");if(File.Exists(metadata))File.Delete(metadata);
+    fixture=Process.Start(new ProcessStartInfo(Application.ExecutablePath,Args.Join(new[]{"--fixture",metadata,"440"})){UseShellExecute=false,CreateNoWindow=true});
+    var wait=Stopwatch.StartNew();while(!File.Exists(metadata)&&wait.ElapsedMilliseconds<7000)Thread.Sleep(30);Require(File.Exists(metadata),"fixture startup");
+    var target=new JavaScriptSerializer().Deserialize<ApplicationTargetData>(File.ReadAllText(metadata));
+    main=new MainForm(new Config{Video="H264 (NVEnc)",AudioSyncMs=int.Parse(Environment.GetEnvironmentVariable("SENDER_TEST_MANUAL_SYNC_MS")??"0")});main.ShowInTaskbar=false;main.StartPosition=FormStartPosition.Manual;main.Location=new Point(-10000,-10000);
+    var clock=Stopwatch.StartNew();var timer=new System.Windows.Forms.Timer{Interval=250};
+    timer.Tick+=(sender,e)=>{
+     try {
+      if(!started){
+       var combo=Controls(main).OfType<ComboBox>().Single();combo.SelectedItem=combo.Items.OfType<ApplicationTarget>().Single(t=>t.ProcessId==target.ProcessId);
+       started=true;clock.Restart();Controls(main).OfType<Button>().Single(b=>b.Text=="TEST · 20s").PerformClick();return;
+      }
+      bool ready=Controls(main).OfType<Button>().Any(b=>b.Text=="START"&&b.Enabled);
+      if((clock.ElapsedMilliseconds>2000&&ready)||clock.ElapsedMilliseconds>30000){
+       timer.Stop();var logBox=(TextBox)typeof(MainForm).GetField("logs",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(main);
+       File.WriteAllText(Path.Combine(directory,"session-log.txt"),logBox.Text);
+       Require(logBox.Text.Contains(Compatibility.Description),"TEST emits diagnostic log");
+       Require(ready,"TEST returns to READY");
+       Require(logBox.Text.Contains("20-second TEST completed."),"preview must complete successfully: "+logBox.Text);
+       File.WriteAllText(report,"PASS: actual TEST click on main message loop; diagnostic log emitted; 20-second preview completed; app remains alive and returns to READY.");result=0;main.Close();
+      }
+     }catch(Exception ex){timer.Stop();File.WriteAllText(report,"FAIL: "+ex);main.Close();}
+    };
+    main.Shown+=(sender,e)=>timer.Start();Application.Run(main);timer.Dispose();
+    if(!File.Exists(report))File.WriteAllText(report,"FAIL: main loop exited without completion.");return result;
+   }catch(Exception ex){File.WriteAllText(report,"FAIL: "+ex);return 1;}
+   finally{if(main!=null)main.Dispose();if(fixture!=null){try{if(!fixture.HasExited)fixture.Kill();fixture.Dispose();}catch{}}}
+  }
   public class ApplicationTargetData {public ulong WindowHandle{get;set;}public int ProcessId{get;set;}public long ProcessStartTicks{get;set;}}
  }
 }

@@ -1,13 +1,11 @@
-﻿# Third-party software
+# Third-party software: v1.1.4
+The application's Unlicense covers only the independent sender and audio helper.
 
-The root LICENSE applies to the independently implemented windowsapp-va-sender application and its source code. It does not change third-party software licenses or rights in the game, its branding, or captured content.
+Included tools/clock/ffmpeg.exe is GPLv3 or later. It uses upstream FFmpeg 49a77d37be plus gfx-auto-sync.patch. Corresponding sources, dependency sources, licenses and build instructions are offered alongside the binaries as ffmpeg-autosync1-source.zip. Keep this source archive available when sharing the native binaries. Compiler and dependency versions differ from BtbN; see tools/clock/BUILD-INFO.txt.
 
-FFmpeg and ffplay are separate programs. The public release ZIP does not include their binaries. The application downloads the pinned official BtbN build on first launch and verifies its SHA-256.
+Native license text is in FFmpeg-clock-GPLv3.txt and native/. x264: GPLv2+; SRT: MPL-2.0; opus: BSD; OpenSSL: Apache-2.0; GCC runtime: GPL with GCC Runtime Library Exception. The included source packages and MinGW/header notices retain their respective licenses.
 
-- Release: https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2026-05-31-13-22
-- Build: N-124714-g49a77d37be-20260531, win64-gpl
-- License details: https://ffmpeg.org/legal.html
+The public ZIP excludes original unmodified tools/ffmpeg.exe and tools/ffplay.exe. Setup downloads those directly from BtbN and verifies SHA-256. Sessions encode with tools/clock/ffmpeg.exe. The offline-test ZIP additionally includes original BtbN tools for private testing; it is not the public distribution package. Redistributing those original tools requires their corresponding source/dependencies as well.
 
-The official build's license is retained under licenses/FFmpeg-GPL.txt after extraction. This GPL license is not replaced by the application's Unlicense.
-
-Do not add downloaded FFmpeg binaries to the source repository. If you choose to redistribute them yourself, satisfy the applicable GPL requirements, including the corresponding source for that build and its dependencies.
+Pinned BtbN release: https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2026-05-31-13-22
+FFmpeg licensing: https://ffmpeg.org/legal.html
